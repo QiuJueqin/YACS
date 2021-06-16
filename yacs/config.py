@@ -1,3 +1,9 @@
+# File: config.py
+# Description: Core module for YACS
+# Created: 2021/6/15 20:30
+# Author: QiuJueqin (qiujueqin@gmail.com)
+
+
 import os.path as op
 import copy
 from argparse import Namespace
@@ -12,7 +18,7 @@ class Config(dict):
     with no 3rd-party dependency.
     You can instantiate a Config object from a yaml file:
 
-        >>> cfg = Config('project_config.yaml')
+        >>> cfg = Config('default_config.yaml')
 
     or from an existing dict:
 
@@ -79,9 +85,10 @@ class Config(dict):
     def unfreeze(self):
         """
         When a Config is frozen (a default action once it is instantiated),
-        you have to use the unfreeze() context manager to modify it:
+        you have to use the unfreeze() context manager to modify it.
 
-            >>> cfg = Config('project_config.yaml')
+        Example:
+            >>> cfg = Config('default_config.yaml')
             >>> with cfg.unfreeze():
             >>>     cfg.batch_size = 512
 
@@ -143,13 +150,14 @@ class Config(dict):
         super().__init__(Config._from_dict(vars(namespace)))
         self.freeze()
 
-    def merge(self, other, allow_new_attributes=False):
+    def merge(self, other, allow_new_attributes=False, keep_existed_attributes=True):
         """
         Recursively merge from other object
 
         :param other: Config object | dict | yaml filepath
-        :param allow_new_attributes: whether allow to add new attributes:
+        :param allow_new_attributes: whether allow to add new attributes
 
+        Example:
             >>> cfg = Config({'optimizer': 'adam'})
             >>> other_cfg = Config({'lr': 0.001})
             >>> cfg.merge(other_cfg, allow_new_attributes=True)
@@ -161,6 +169,27 @@ class Config(dict):
             >>> cfg.merge(other_cfg, allow_new_attributes=False)
             AttributeError: attempted to add a new attribute: weight_decay
 
+        :param keep_existed_attributes: whether keep those attributes
+            that are not in 'other'. You may wish to trigger this if
+            requires to completely replace a field (a filed refers to a
+            collection of multiple attributes, i.e., a Config object in a
+            Config object). See example/main.py: Example 5 for a practical
+            usage.
+
+        Example:
+            >>> cfg1 = Config({'foo': {'Alice': 0, 'Bob': 1}})
+            >>> cfg2 = cfg1.clone()
+            >>> other_cfg = Config({'foo': {'Carol': 42}})
+            >>> cfg1.merge(other_cfg, allow_new_attributes=True)
+            >>> cfg1.print()
+            foo:
+                Alice: 0
+                Bob: 1
+                Carol: 42
+            >>> cfg2.merge(other_cfg, allow_new_attributes=True, keep_existed_attributes=False)
+            >>> cfg2.print()
+            foo:
+                Carol: 42
         """
 
         if isinstance(other, Config):
@@ -170,7 +199,7 @@ class Config(dict):
         else:
             raise TypeError('attempted to merge an unsupported object: {}'.format(type(other)))
 
-        def _merge(source_config, other_config, allow_add_new):
+        def _merge(source_config, other_config, allow_add_new, keep_existed):
             """ Recursively merge new config into source config """
 
             with source_config.unfreeze():
@@ -180,13 +209,19 @@ class Config(dict):
 
                     if isinstance(v, Config):
                         if k in source_config:
-                            _merge(source_config[k], v, allow_add_new)
+                            _merge(source_config[k], v, allow_add_new, keep_existed)
                         else:
                             source_config[k] = v
                     else:
                         source_config[k] = copy.deepcopy(v)
 
-        _merge(self, new_config, allow_new_attributes)
+                if not keep_existed:
+                    source_keys = list(source_config.keys())
+                    for k in source_keys:
+                        if k not in other_config and not isinstance(source_config[k], Config):
+                            source_config.remove(k)
+
+        _merge(self, new_config, allow_new_attributes, keep_existed_attributes)
 
     @classmethod
     def _from_dict(cls, dic):
@@ -219,6 +254,15 @@ class Config(dict):
         return Config(copy.deepcopy(self.to_dict()))
 
     # ---------------- Misc ----------------
+
+    def remove(self, key):
+        """ Remove an attribute """
+        if self.is_frozen:
+            raise AttributeError('attempted to modify an immutable Config')
+        if key not in self:
+            raise AttributeError('attempted to delete a non-existing attribute: {}'.format(key))
+
+        del self[key]
 
     def __str__(self):
         texts = []

@@ -1,0 +1,7 @@
+data:
+  subsets: ["test"]
+  batch_size: 256
+
+optimizer:
+  optimizer_name: "SGD"
+

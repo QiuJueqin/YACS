@@ -3,9 +3,9 @@
 
 ## Introduction
 
-YACS is a very lightweight (core implementation is no more than 200 lines) yet sufficiently powerful configuration utility, requiring no 3rd-party package<sup>*</sup>. I used it in my several machine-learning/deep-learning projects. It worked well and reliably.
+YACS is a very lightweight (core implementation is no more than 200 lines) yet sufficiently powerful configuration utility, requiring no 3rd-party package<sup>*</sup>. I used it in my several machine-learning/deep-learning projects, and it worked well and reliably.
 
-> <sup>*</sup> If wish to load/dump configuration from/to a yaml file, PyYaml package is required.
+> <sup>*</sup> If wish to load/dump configuration from/to a yaml file, [PyYAML](https://pypi.org/project/PyYAML/) is required.
 
 
 ## Installation

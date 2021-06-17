@@ -4,4 +4,3 @@ data:
 
 optimizer:
   optimizer_name: "SGD"
-

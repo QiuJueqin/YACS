@@ -1,6 +1,9 @@
+model:
+  backbone: resnet50
+
 data:
-  subsets: ["test"]
   batch_size: 256
 
-optimizer:
-  optimizer_name: "SGD"
+train:
+  momentum: 0.999
+  lr: 1E-4

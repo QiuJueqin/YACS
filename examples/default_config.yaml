@@ -1,12 +1,10 @@
+model:
+  backbone: vgg19
+
 data:
-  subsets: ["train", "val"]
-  batch_size: 128
+  batch_size: 32
 
-optimizer:
-  optimizer_name: "Adam"
-  lr: 1E-4
-
-lr_scheduler:
-  lr_scheduler_name: "cosine_with_warmup_and_restarts"
-  warmup_epochs: 10
-  cycle_epochs: 50
+train:
+  optimizer: SGD
+  momentum: 0.9
+  lr: 5E-3

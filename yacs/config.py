@@ -7,12 +7,13 @@
 import os.path as op
 import copy
 from argparse import Namespace
+from collections import OrderedDict
 from contextlib import contextmanager
 
 import yaml
 
 
-class Config(dict):
+class Config(OrderedDict):
     """
     Yet Another Configuration System: a plug-and-play configuration system
     with no 3rd-party dependency.
@@ -47,7 +48,7 @@ class Config(dict):
 
         >>> print(cfg.batch_size)
 
-    See README.md for more usage hints.
+    See README.md and examples/main.py for more usage hints.
     """
 
     def __init__(self, init=None):
@@ -225,7 +226,7 @@ class Config(dict):
 
     @classmethod
     def _from_dict(cls, dic):
-        dic = copy.deepcopy(dic)
+        dic = copy.deepcopy(OrderedDict(dic))
         for k, v in dic.items():
             if isinstance(v, dict):
                 dic[k] = cls(v)
@@ -266,7 +267,7 @@ class Config(dict):
 
     def __str__(self):
         texts = []
-        for k, v in sorted(self.items()):
+        for k, v in self.items():
             sep = '\n' if isinstance(v, Config) else ' '
             attr_str = '{}:{}{}'.format(str(k), sep, str(v))
             attr_str = self._indent(attr_str)

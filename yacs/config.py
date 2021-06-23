@@ -53,7 +53,7 @@ class Config(OrderedDict):
 
     def __init__(self, init=None):
         """
-        :param init: dict | yaml filepath | namespace created by argparse
+        :param init: dict | yaml filepath | argparse.Namespace object
         """
 
         self.__dict__['__immutable__'] = False
@@ -155,7 +155,7 @@ class Config(OrderedDict):
         """
         Recursively merge from other object
 
-        :param other: Config object | dict | yaml filepath
+        :param other: Config object | dict | yaml filepath | argparse.Namespace object
         :param allow_new_attributes: whether allow to add new attributes
 
         Example:
@@ -195,7 +195,7 @@ class Config(OrderedDict):
 
         if isinstance(other, Config):
             new_config = other
-        elif isinstance(other, (dict, str)):
+        elif isinstance(other, (dict, str, Namespace)):
             new_config = Config(other)
         else:
             raise TypeError('attempted to merge an unsupported object: {}'.format(type(other)))

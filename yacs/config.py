@@ -7,7 +7,7 @@
 import os.path as op
 import copy
 from argparse import Namespace
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from contextlib import contextmanager
 
 import yaml
@@ -41,12 +41,12 @@ class Config(OrderedDict):
     Config supports two ways to access containing attributes:
     built-in dict way:
 
-        >>> print(cfg['batch_size'])
+        >>> bs = cfg['batch_size']
 
     and dotted-dict way (more recommended since it requires less keyboard
     hits and save your line width):
 
-        >>> print(cfg.batch_size)
+        >>> bs = cfg.batch_size
 
     See README.md and examples/main.py for more usage hints.
     """
@@ -145,10 +145,20 @@ class Config(OrderedDict):
         self.freeze()
 
     def from_namespace(self, namespace):
+        """
+        Instantiation from an argparse.Namespace object.
+        Note: since argparse doesn't support recursive arguments, we treat dot
+        separator ('.') in the arguments as a notation to recursively create a child
+        Config object.
+        For example, by giving '--foo.bar 42' argument to argparse, from_namespace()
+        will create a Config object from the namespace as if it's created from a
+        nested dict: {'foo': {'bar': 42}}
+        """
         if not isinstance(namespace, Namespace):
             raise TypeError('loaded from an invalid type: {}'.format(type(namespace)))
 
-        super().__init__(Config._from_dict(vars(namespace)))
+        nested_dict = self._convert_to_nested_dict(vars(namespace))
+        super().__init__(Config._from_dict(nested_dict))
         self.freeze()
 
     def merge(self, other, allow_new_attributes=False, keep_existed_attributes=True):
@@ -232,6 +242,55 @@ class Config(OrderedDict):
                 dic[k] = cls(v)
 
         return dic
+
+    @staticmethod
+    def _convert_to_nested_dict(dic, separator='.'):
+        """
+        Create a nested dict from a single-hierarchy dict, by separating its
+        keys into sub-keys by the separator.
+
+        For example, given a non-nested dict in which part of keys contains dots:
+
+        my_dict = {
+            'foo': 42,
+            'alpha.beta': 123,
+            'bar.baz.hello': 'HELLO',
+            'bar.baz.world': 'WORLD'
+        }
+
+        convert_nested_dict(my_dict, '.') converts it into a nested dict:
+
+        {
+            'foo': 42,
+            'alpha': {'beta': 123},
+            'bar': {
+                'baz': {
+                    'hello': 'HELLO',
+                    'world': 'WORLD'
+                }
+            }
+        }
+        """
+
+        def _init_nested_dict():
+            return defaultdict(_init_nested_dict)
+
+        def _default_to_dict(d):
+            """ Convert a defaultdict into regular dict """
+            if isinstance(d, defaultdict):
+                d = {kk: _default_to_dict(vv) for kk, vv in d.items()}
+            return d
+
+        nested_dict = _init_nested_dict()
+
+        for k, v in dic.items():
+            tmp_d = nested_dict
+            keys = k.split(separator)
+            for sub_key in keys[:-1]:
+                tmp_d = tmp_d[sub_key]
+            tmp_d[keys[-1]] = v
+
+        return _default_to_dict(nested_dict)
 
     # ---------------- Output ----------------
 

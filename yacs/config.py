@@ -314,7 +314,7 @@ class Config(OrderedDict):
     def dump(self, save_path):
         """ Dump a Config object into a yaml file """
         with open(save_path, 'w') as fp:
-            yaml.safe_dump(self.to_dict(), fp)
+            yaml.safe_dump(self.to_dict(), fp, sort_keys=False)
 
     def clone(self):
         """ Create a deep copy of the Config object """

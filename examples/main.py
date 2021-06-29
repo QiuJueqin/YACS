@@ -15,18 +15,14 @@ def _print(config, title):
 
 
 # ========== Example 1 ==========
-# Load default config from a yaml file.
-default_config_path = './default_config.yaml'
-cfg = Config(default_config_path)
-
+# Load default config from a yaml.
+cfg = Config('./default_config.yaml')
 _print(cfg, 'Default config:')
 
 
 # ========== Example 2 ==========
-# Load user-specific config from another yaml file and override those attributes in default config.
-user_config_path = './user_config.yaml'
-cfg.merge(user_config_path)
-
+# Load user-specific configs from another yaml and override those attributes in default cfg.
+cfg.merge('./user_config.yaml')
 _print(cfg, 'User-specific config:')
 
 
@@ -42,7 +38,7 @@ _print(cfg, 'Config after on-spot modification:')
 # ========== Example 4 ==========
 # Use context manager to add new attributes.
 with cfg.unfreeze():
-    cfg.model.head = 'rpn'  # add a leaf attribute ('head' in 'model' node)
+    cfg.model.head = 'rpn'
     cfg.exp = Config({'epochs': 500})  # add a new node ('exp') and leaf attribute ('epochs')
 
 _print(cfg, 'Config with new attributes and nodes:')
@@ -58,7 +54,7 @@ cfg.train.merge(train_config,
                 allow_new_attributes=True,
                 keep_existed_attributes=False)
 
-# Attribute 'momentum' is gone since the new 'train' node doesn't contain this attribute
+# Attribute 'momentum' now is gone since the new 'train' node doesn't contain it
 _print(cfg, 'Config after replacing cfg.train node:')
 
 

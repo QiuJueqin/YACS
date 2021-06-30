@@ -4,9 +4,5 @@ model:
   backbone: vgg19
 
 data:
+  source: dir/to/data/*.jpg
   batch_size: 32
-
-train:
-  optimizer: SGD
-  momentum: 0.9
-  lr: 5E-3

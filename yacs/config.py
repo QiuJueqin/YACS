@@ -210,7 +210,7 @@ class Config(OrderedDict):
 
         :param keep_existed_attributes: whether keep those attributes that are not in 'other'.
         You may wish to trigger this if requires to completely replace a child Config object.
-        See example/main.py: Example 5 for a practical usage.
+        See example/examples.py: Example 5 for a practical usage.
 
         Example:
 
@@ -237,7 +237,9 @@ class Config(OrderedDict):
         elif isinstance(other, (dict, str, pathlib.Path, argparse.Namespace)):
             other = Config(other)
         else:
-            raise TypeError('attempted to merge from an unsupported {} object'.format(type(other)))
+            raise TypeError(
+                'attempted to merge from an unsupported {} object'.format(type(other))
+            )
 
         def _merge(source_cfg, other_cfg, allow_add_new, keep_existed):
             """ Recursively merge the new Config object into the source one """
@@ -245,7 +247,11 @@ class Config(OrderedDict):
             with source_cfg.unfreeze():
                 for k, v in other_cfg.items():
                     if k not in source_cfg and not allow_add_new:
-                        raise AttributeError('attempted to add a new attribute: {}'.format(k))
+                        raise AttributeError(
+                            'attempted to add an attribute {} but it is not found in the source '
+                            'Config. Set \'allow_new_attributes\' to True if requires to add new '
+                            'attribute'.format(k)
+                        )
 
                     if isinstance(v, Config):
                         if k in source_cfg:

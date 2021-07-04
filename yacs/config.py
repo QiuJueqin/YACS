@@ -332,17 +332,20 @@ class Config(OrderedDict):
         return self.to_dict().__repr__()
 
     def __str__(self):
-        texts = []
-        for k, v in self.items():
-            sep = '\n' if isinstance(v, Config) else ' '
-            attr_str = '{}:{}{}'.format(str(k), sep, str(v))
-            attr_str = self._indent(attr_str)
-            texts.append(attr_str)
 
-        return '\n'.join(texts)
+        def _to_string(dic, indent=0):
+            texts = []
+            for k, v in dic.items():
+                if not isinstance(v, Config):
+                    texts += ['{:<25}{}'.format(' ' * indent + k + ':', str(v))]
+                else:
+                    texts += [k + ':'] + _to_string(v, indent=indent + 2)
+            return texts
 
-    def print(self):
-        print(self)
+        return '\n'.join(_to_string(self))
+
+    def print(self, streamer=print):
+        streamer(str(self))
 
     def remove(self, key):
         """ Remove an attribute by its key. """
@@ -460,14 +463,3 @@ class Config(OrderedDict):
             return separator_dict
 
         return _create_separator_dict(nested_dict)
-
-    @staticmethod
-    def _indent(text, num_spaces=2):
-        texts = text.split('\n')
-        if len(texts) == 1:
-            return texts[0]
-
-        first = texts.pop(0)
-        texts = [num_spaces * ' ' + line for line in texts]
-        texts = '\n'.join(texts)
-        return first + '\n' + texts

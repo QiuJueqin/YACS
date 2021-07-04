@@ -9,9 +9,9 @@ from yacs.config import Config
 
 def _print(config, title):
     print(title)
-    print('-' * 40)
+    print('-' * 42)
     config.print()
-    print('\n')
+    print('-' * 42 + '\n')
 
 
 # Load default config from a yaml.

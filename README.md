@@ -8,7 +8,8 @@ my several machine-learning/deep-learning projects, and it worked well and relia
 
 ## Installation
 
-Since YACS is so simple, we recommend just copying the single file [`config.py`](yacs/config.py) to
+Since YACS is so simple, we recommend just copying the single [`yacs/config.py`](yacs/config.
+py) file to
 your project. That is it. No tedious package installation is needed.
 
 > Note: if wish to load/dump configurations from/to a yaml file, [PyYAML](https://pypi.org/project/PyYAML/) is required.
@@ -18,7 +19,8 @@ your project. That is it. No tedious package installation is needed.
 For a regular-scale project, developers usually use a configuration file to define some default
 behaviors of their programs.
 
-Take a machine learning project as example, the configuration file could define under which mode the
+Take a machine learning project as example, the configuration file defines under which 
+mode the
 experiment is running, use which model to run the task, and how the data is organized:
 
 <a name="default_config"></a>
@@ -35,10 +37,10 @@ data:
 
 ### Initialization
 
-In YACS, we use the [`Config`](yacs/config.py#15) class to implement all necessary interaction and
-manipulation to your configurations.
+YACS uses a [`Config`](yacs/config.py#15) object to implement all necessary interaction and
+manipulation to the configurations.
 
-Let's start by loading these configurations from the yaml:
+Let's start by loading these configurations from the yaml and printing them:
 
 ```python
 from yacs.config import Config
@@ -47,15 +49,15 @@ cfg = Config('default_config.yaml')
 cfg.print()
 ```
 
-In the terminal, it displays something like this:
+In the terminal, it shows something like this:
 
 ```shell
-mode: train
+mode:               train
 model:
-  backbone: vgg19
+  backbone:         vgg19
 data:
-  source: dir/to/data/*.jpg
-  batch_size: 32
+  source:           dir/to/data/*.jpg
+  batch_size:       32
 ```
 
 ### Access attributes
@@ -65,7 +67,7 @@ or more compactly, in a dotted-dict way (more recommended):
 
 ```python
 mode = cfg['mode']  # 'train'
-mode = cfg.mode  # 'train'
+mode = cfg.mode     # 'train'
 ```
 
 For inputs with nested structures, `Config` objects will be recursively created, so you can access
@@ -83,12 +85,11 @@ For safety reason, attributes are not allowed to be modified nor deleted by defa
 cfg.data.batch_size = 512  # AttributeError: attempted to modify an immutable Config
 ```
 
-Instead, users have to use the `unfreeze()` context manager to make modifications:
+Instead, users have to use the `unfreeze()` context manager to make any modification:
 
 ```python
 with cfg.unfreeze():
     cfg.data.batch_size = 512
-bs = cfg.data.batch_size  # 512
 ```
 
 Similarly, to add a new attribute or a child object to the current `Config`
@@ -101,14 +102,14 @@ cfg.print()
 ```
 
 ```shell
-mode: train
+mode:               train
 model:
-  backbone: vgg19
+  backbone:         vgg19
 data:
-  source: dir/to/data/*.jpg
-  batch_size: 512
+  source:           dir/to/data/*.jpg
+  batch_size:       512
 training:
-  optimizer: Adam
+  optimizer:        Adam
 ```
 
 Here, by typing `cfg.training = Config({'optimizer': 'Adam'})`, we instantiate a temporary 
@@ -118,9 +119,9 @@ Here, by typing `cfg.training = Config({'optimizer': 'Adam'})`, we instantiate a
 
 For a machine learning project, hyper-parameters or other setups vary case-by-case for each 
 training or inference, so in addition to the default configurations, developers often require a 
-temporary config file at hand, by which to override parts of default configurations.
+temporary config file at hand, by which to override parts of the default configurations.
 
-Assume we are now using another yaml to specify these user-specific configurations:
+Assume we are now using another yaml to store these user-specific configurations:
 
 ```yaml
 # user_config.yaml
@@ -140,12 +141,12 @@ cfg.print()
 ```
 
 ```shell
-mode: train
+mode:               train
 model:
-  backbone: resnet50
+  backbone:         resnet50
 data:
-  source: dir/to/data/*.jpg
-  batch_size: 128
+  source:           dir/to/data/*.jpg
+  batch_size:       128
 ```
 
 If the user-specific configurations contain attributes that are not in `cfg`, use 
@@ -155,7 +156,7 @@ If the user-specific configurations contain attributes that are not in `cfg`, us
 cfg.merge('user_config.yaml', allow_new_attributes=True)
 ```
 
-Let us see another example. Assume there is a `optimizer` attribute in the default yaml, in which 
+Let's see another example. Assume there is a `optimizer` attribute in the default yaml, in which 
 we assign three children attributes `optimizer_name`, `lr`, and `momentum`:
 
 ```yaml
@@ -184,17 +185,17 @@ cfg.print()
 ```
 
 ```shell
-mode: train
+mode:               train
 optimizer:
-  optimizer_name: Adam
-  lr: 1e-05
-  momentum: 0.9
+  optimizer_name:   Adam
+  lr:               1e-05
+  momentum:         0.9
 ```
 
 Note that by default, the non-conflict attributes will be kept unchanged after merging, so in this case, `cfg.optimizer.momentum` attribute is still kept after merging, which is not our intention because Adam does not  require a `momentum` parameter.
 
 In such scenarios that we would like to completely replace an attribute (`cfg.optmizer` 
-here) and all its children attributes, use `keep_existed_attributes=False` to make your cfg neater:
+here) and all its children attributes, use `keep_existed_attributes=False` to keep your `cfg` neater:
 
 
 ```python
@@ -205,28 +206,31 @@ cfg.print()
 ```
 
 ```shell
-mode: train
+mode:               train
 optimizer:
-  optimizer_name: Adam
-  lr: 1e-05
+  optimizer_name:   Adam
+  lr:               1e-05
 ```
 
-Here `cfg.optimizer.momentum` is gone as we explicitly ask not to keep those old and non-conflict attributes.
+Now `cfg.optimizer.momentum` is gone because we explicitly ask not to keep those old and 
+non-conflict 
+attributes.
 
 
 ### Work with `argparse`
 
-One appealing feature in [Hydra](https://github.com/facebookresearch/hydra) is that users can 
-control their programs' running options in the terminal with the help of `argparse` package.
+One appealing feature in [Hydra](https://github.com/facebookresearch/hydra) is that it allows 
+users to control their programs' running options in the terminal, with the help of `argparse` 
+package.
 
-YACS also allows initializing or merging configurations from the terminal.
+YACS also allows initializing or merging configurations from the command line.
 
-`Config`'s `to_parser()` method offers a way to automatically generate an argparse.
-ArgumentParser object, whose arguments are converted from the key-attribute pairs in 
-configurations. For a nested attribute, keys from hierarchies are concatenated into an argument, 
-with `.` as separators.
+`Config`'s `to_parser()` method offers a way to automatically generate an `argparse.ArgumentParser` 
+object, whose arguments are converted from the key-attribute pairs. For a nested attribute, keys 
+from hierarchies are concatenated into an argument, with `.` as separators.
 
-Let us use [`default_config.yaml`](#default_config) as example again. Instead of explicitly creating an argument parser like
+Let's use [`default_config.yaml`](#default_config) as example again. Instead of explicitly 
+creating an argument parser such as
 
 ```python
 import argparse
@@ -271,18 +275,18 @@ if __name__ == '__main__':
 Finally we run `main.py` in the terminal with some extra arguments:
 
 ```shell
-$ python main.py --model.backbone resnet50 --data.batch_size 1024 
+$ python main.py --model.backbone resnet50 --data.batch_size 1024
 ```
 
 and get results:
 
 ```shell
-mode: train
+mode:               train
 model:
-  backbone: resnet50
+  backbone:         resnet50
 data:
-  source: dir/to/data/*.jpg
-  batch_size: 1024
+  source:           dir/to/data/*.jpg
+  batch_size:       1024
 ```
 
 
@@ -290,11 +294,11 @@ data:
 
 `Config` provides following method to dump or convert your configurations to other datatype: 
 
-* `dump(yaml_path)`: dump the configurations into a yaml file. 
+* `dump(yaml_path)` dumps the configurations into a yaml file. 
 
-* `clone()`: create a deep copy the current `Config` object. 
+* `clone()` creates a deep copy the current `Config` object. 
   
-* `to_dict()`: convert to a regular nested dict.
+* `to_dict()` converts to a regular nested dict.
 
 ### More Usage Examples
 
@@ -307,6 +311,6 @@ and [OmegaConf](https://github.com/omry/omegaconf).
 
 ## License
 
-Copyright 2020 Qiu Jueqin
+Copyright 2021 Qiu Jueqin.
 
 Licensed under [MIT](http://opensource.org/licenses/MIT).

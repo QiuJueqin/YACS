@@ -7,8 +7,7 @@ my several machine-learning/deep-learning projects, and it worked well and relia
 
 # Installation
 
-Since YACS is so simple, we recommend just copying the single [`yacs/config.py`](yacs/config.
-py) file to
+Since YACS is so simple, we recommend just copying the single [`yacs/config.py`](yacs/config.py) file to
 your project. That is it. No tedious package installation is needed.
 
 > Note: if wish to load/dump configurations from/to a yaml file, [PyYAML](https://pypi.org/project/PyYAML/) is required.

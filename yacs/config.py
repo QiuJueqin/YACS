@@ -365,6 +365,8 @@ class Config(OrderedDict):
         for k, v in dic.items():
             if isinstance(v, dict):
                 dic[k] = cls(v)
+            elif isinstance(v, list):  # load list as tuple for safety
+                dic[k] = tuple(cls(x) if isinstance(x, dict) else x for x in v)
 
         return dic
 

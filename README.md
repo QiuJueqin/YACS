@@ -1,12 +1,11 @@
 # YACS: Yet Another Configuration System
 
-## Introduction
-
 YACS is a very lightweight (the core implementation is no more than 250 lines)
 yet sufficiently powerful Python configuration utility, requiring no 3rd-party package. I used it in
 my several machine-learning/deep-learning projects, and it worked well and reliably.
 
-## Installation
+
+# Installation
 
 Since YACS is so simple, we recommend just copying the single [`yacs/config.py`](yacs/config.
 py) file to
@@ -14,7 +13,8 @@ your project. That is it. No tedious package installation is needed.
 
 > Note: if wish to load/dump configurations from/to a yaml file, [PyYAML](https://pypi.org/project/PyYAML/) is required.
 
-## Usages
+
+# Usages
 
 For a regular-scale project, developers usually use a configuration file to define some default
 behaviors of their programs.
@@ -35,7 +35,7 @@ data:
   batch_size: 32
 ```
 
-### Initialization
+## Initialization
 
 YACS uses a [`Config`](yacs/config.py#15) object to implement all necessary interaction and
 manipulation to the configurations.
@@ -60,7 +60,7 @@ data:
   batch_size:       32
 ```
 
-### Access attributes
+## Access attributes
 
 `Config` is actually a child class of the built-in `dict`, so we can access its attributes by keys,
 or more compactly, in a dotted-dict way (more recommended):
@@ -77,7 +77,7 @@ its attributes in a recursive way:
 bs = cfg.data.batch_size  # 32
 ```
 
-### Modify attributes
+## Modify attributes
 
 For safety reason, attributes are not allowed to be modified nor deleted by default:
 
@@ -115,7 +115,7 @@ training:
 Here, by typing `cfg.training = Config({'optimizer': 'Adam'})`, we instantiate a temporary 
 `Config` object from a dict and add it as the `training` attribute to `cfg`.
 
-### Merge
+## Merge
 
 For a machine learning project, hyper-parameters or other setups vary case-by-case for each 
 training or inference, so in addition to the default configurations, developers often require a 
@@ -197,7 +197,6 @@ Note that by default, the non-conflict attributes will be kept unchanged after m
 In such scenarios that we would like to completely replace an attribute (`cfg.optmizer` 
 here) and all its children attributes, use `keep_existed_attributes=False` to keep your `cfg` neater:
 
-
 ```python
 cfg = Config('sgd.yaml')
 adam_cfg = Config('adam.yaml')
@@ -216,8 +215,7 @@ Now `cfg.optimizer.momentum` is gone because we explicitly ask not to keep those
 non-conflict 
 attributes.
 
-
-### Work with `argparse`
+## Work with `argparse`
 
 One appealing feature in [Hydra](https://github.com/facebookresearch/hydra) is that it allows 
 users to control their programs' running options in the terminal, with the help of `argparse` 
@@ -290,7 +288,7 @@ data:
 ```
 
 
-### Dump & Conversion
+## Dump & Conversion
 
 `Config` provides following method to dump or convert your configurations to other datatype: 
 
@@ -300,16 +298,16 @@ data:
   
 * `to_dict()` converts to a regular nested dict.
 
-### More Usage Examples
+## More Usage Examples
 
 See [`examples`](examples) directory for more practical usages.
 
-## Acknowledgement
+# Acknowledgement
 
 YACS shares part of designs from [rbgirshick's yacs](https://github.com/rbgirshick/yacs)
 and [OmegaConf](https://github.com/omry/omegaconf).
 
-## License
+# License
 
 Copyright 2021 Qiu Jueqin.
 

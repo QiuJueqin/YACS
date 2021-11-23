@@ -149,10 +149,10 @@ data:
 ```
 
 If the user-specific configurations contain attributes that are not in `cfg`, use 
-`allow_new_attributes=True` to explicitly claim that you wish to add new attributes:
+`allow_new_attr=True` to explicitly claim that you wish to add new attributes:
 
 ```python
-cfg.merge('user_config.yaml', allow_new_attributes=True)
+cfg.merge('user_config.yaml', allow_new_attr=True)
 ```
 
 Let's see another example. Assume there is a `optimizer` attribute in the default yaml, in which 
@@ -194,12 +194,12 @@ optimizer:
 Note that by default, the non-conflict attributes will be kept unchanged after merging, so in this case, `cfg.optimizer.momentum` attribute is still kept after merging, which is not our intention because Adam does not  require a `momentum` parameter.
 
 In such scenarios that we would like to completely replace an attribute (`cfg.optmizer` 
-here) and all its children attributes, use `keep_existed_attributes=False` to keep your `cfg` neater:
+here) and all its children attributes, use `keep_existed_attr=False` to keep your `cfg` neater:
 
 ```python
 cfg = Config('sgd.yaml')
 adam_cfg = Config('adam.yaml')
-cfg.optimizer.merge(adam_cfg.optimizer, keep_existed_attributes=False)
+cfg.optimizer.merge(adam_cfg.optimizer, keep_existed_attr=False)
 cfg.print()
 ```
 

@@ -224,8 +224,8 @@ class Config(OrderedDict):
 
         >>> cfg1 = Config({'foo': {'Alice': 0, 'Bob': 1}})
         >>> cfg2 = cfg1.clone()
-        >>> other = {'foo': {'Carol': 42}}
-        >>> cfg1.merge(other, allow_new_attr=True)
+        >>> another = {'foo': {'Carol': 42}}
+        >>> cfg1.merge(another, allow_new_attr=True)
         >>> cfg1.print()
 
         foo:
@@ -233,7 +233,7 @@ class Config(OrderedDict):
             Bob: 1
             Carol: 42
 
-        >>> cfg2.merge(other, allow_new_attr=True, keep_existed_attr=False)
+        >>> cfg2.merge(another, allow_new_attr=True, keep_existed_attr=False)
         >>> cfg2.print()
 
         foo:

@@ -19,7 +19,8 @@ cfg = Config('./default_config.yaml')
 _print(cfg, 'Example 1: Load default config:')
 
 
-# Load user-specific configs from another yaml and override those attributes in default cfg.
+# Load user-specific configs from another yaml and override those attributes
+# in default cfg.
 cfg.merge('./user_config.yaml')
 _print(cfg, 'Example 2: Load user-specific config and merge:')
 
@@ -38,11 +39,12 @@ with cfg.unfreeze():
 _print(cfg, 'Example 4: After adding new attributes:')
 
 
-# Override some attributes from an dict. Note that when setting 'keep_existed_attributes' to
-# False, original attributes in the source config will be removed if they are not in the new config.
-# This feature will be helpful if requires to completely replace a nested attribute
-cfg.optimizer.merge({'name': 'Adam', 'lr': 1E-5}, keep_existed_attributes=False)
-_print(cfg, 'Example 5: After replacing cfg.optimizer:')  # note 'momentum' now is gone
+# Override some attributes from an dict. Note that when setting
+# `keep_existed_attr` to False, original attributes in the source config will
+# be removed if they are not in the new config. This feature will be helpful
+# if requires to completely replace a nested attribute
+cfg.optimizer.merge({'name': 'Adam', 'lr': 1E-5}, keep_existed_attr=False)
+_print(cfg, 'Example 5: After replacing cfg.optimizer:')  # 'momentum' is gone
 
 
 # Remove some attributes/nodes.

@@ -4,7 +4,7 @@
 # Author: Qiu Jueqin (qiujueqin@gmail.com)
 
 
-from yacs.config import Config
+from yacs import Config
 
 
 def _print(config, title):

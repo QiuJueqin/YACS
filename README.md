@@ -7,7 +7,7 @@ my several machine-learning/deep-learning projects, and it worked well and relia
 
 # Installation
 
-Since YACS is so simple, we recommend just copying the single [`yacs/config.py`](yacs/config.py) file to
+Since YACS is so simple, we recommend just copying the single [`yacs.py`](yacs.py) file to
 your project. That is it. No tedious package installation is needed.
 
 > If wish to load/dump configurations from/to a yaml file, [PyYAML](https://pypi.org/project/PyYAML/) is required.
@@ -36,13 +36,13 @@ data:
 
 ## Initialization
 
-YACS uses a [`Config`](yacs/config.py#15) object to implement all necessary interaction and
+YACS uses a [`Config`](yacs.py#15) object to implement all necessary interaction and
 manipulation to the configurations.
 
 Let's start by loading these configurations from the yaml and printing them:
 
 ```python
-from yacs.config import Config
+from yacs import Config
 
 cfg = Config('default_config.yaml')
 cfg.print()
@@ -255,17 +255,19 @@ the
 
 ```python
 # main.py
-from yacs.config import Config
+from yacs import Config
+
 
 def main(cfg):
     cfg.print()
     # core program ...
 
+    
 if __name__ == '__main__':
     cfg = Config('default_config.yaml')
     parser = cfg.to_parser()
     cfg.merge(parser.parse_args())  # merge from an argparse.Namespace object
-    
+
     main(cfg)
 ```
 

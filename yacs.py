@@ -1,4 +1,4 @@
-# File: config.py
+# File: yacs.py
 # Description: Core module for YACS
 # Created: 2021/6/15 20:30
 # Author: Qiu Jueqin (qiujueqin@gmail.com)

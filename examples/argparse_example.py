@@ -6,8 +6,7 @@
 # python argparse_example.py --help
 
 
-import init_path
-from yacs.config import Config
+from yacs import Config
 
 
 def main(cfg):

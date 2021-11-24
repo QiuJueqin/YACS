@@ -10,7 +10,7 @@ my several machine-learning/deep-learning projects, and it worked well and relia
 Since YACS is so simple, we recommend just copying the single [`yacs/config.py`](yacs/config.py) file to
 your project. That is it. No tedious package installation is needed.
 
-> Note: if wish to load/dump configurations from/to a yaml file, [PyYAML](https://pypi.org/project/PyYAML/) is required.
+> If wish to load/dump configurations from/to a yaml file, [PyYAML](https://pypi.org/project/PyYAML/) is required.
 
 
 # Usages
@@ -275,7 +275,7 @@ Finally we run `main.py` in the terminal with some extra arguments:
 $ python main.py --model.backbone resnet50 --data.batch_size 1024
 ```
 
-and get results:
+and will get results:
 
 ```shell
 mode:               train
@@ -293,9 +293,9 @@ data:
 
 * `dump(yaml_path)` dumps the configurations into a yaml file. 
 
-* `clone()` creates a deep copy the current `Config` object. 
+* `copy()` creates a deep copy the current `Config` object. 
   
-* `to_dict()` converts to a regular nested dict.
+* `to_dict()` converts a `Config` object to a regular nested dict.
 
 ## More Usage Examples
 

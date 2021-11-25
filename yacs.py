@@ -223,7 +223,7 @@ class Config(OrderedDict):
         Example:
 
         >>> cfg1 = Config({'foo': {'Alice': 0, 'Bob': 1}})
-        >>> cfg2 = cfg1.clone()
+        >>> cfg2 = cfg1.copy()
         >>> another = {'foo': {'Carol': 42}}
         >>> cfg1.merge(another, allow_new_attr=True)
         >>> cfg1.print()

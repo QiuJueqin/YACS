@@ -332,7 +332,7 @@ class Config(OrderedDict):
     def dump(self, save_path):
         """ Dump a Config object into a yaml file """
         with open(save_path, 'w') as fp:
-            yaml.safe_dump(self.to_dict(alphabetical=True), fp)
+            yaml.dump(self.to_dict(alphabetical=True), fp)
 
     def copy(self):
         """ Create a deep copy of the Config object """
@@ -346,21 +346,25 @@ class Config(OrderedDict):
     def __str__(self):
         return self.to_dict().__repr__()
 
-    def _format(self):
+    def to_str(self, alphabetical=False):
+        title_width = 30
 
         def _to_string(dic, indent=0):
             texts = []
-            for k, v in dic.items():
-                if not isinstance(v, Config):
-                    texts += ['{:<25}{}'.format(' ' * indent + k + ':', str(v))]
+            keys = sorted(dic.keys()) if alphabetical else dic.keys()
+            for k in keys:
+                title = ' ' * indent + str(k) + ':'
+                texts += ['{:<{}}'.format(title, title_width + indent)]
+                if not isinstance(dic[k], Config):
+                    texts[-1] += str(dic[k])
                 else:
-                    texts += [k + ':'] + _to_string(v, indent=indent + 2)
+                    texts += _to_string(dic[k], indent=indent + 2)
             return texts
 
         return '\n'.join(_to_string(self))
 
-    def print(self, streamer=print):
-        streamer(self._format())
+    def print(self, streamer=print, alphabetical=False):
+        return streamer(self.to_str(alphabetical))
 
     def remove(self, key):
         """ Remove an attribute by its key. """

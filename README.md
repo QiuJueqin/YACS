@@ -51,12 +51,12 @@ cfg.print()
 In the terminal, it shows something like this:
 
 ```shell
-mode:               train
-model:
-  backbone:         vgg19
-data:
-  source:           dir/to/data/*.jpg
-  batch_size:       32
+mode:                         train
+model:                        
+  backbone:                     vgg19
+data:                         
+  source:                       dir/to/data/*.jpg
+  batch_size:                   32
 ```
 
 ## Access attributes
@@ -84,7 +84,7 @@ For safety reason, attributes are not allowed to be modified nor deleted by defa
 cfg.data.batch_size = 512  # AttributeError: attempted to modify an immutable Config
 ```
 
-Instead, users have to use the `unfreeze()` context manager to make any modification:
+Instead, one have to use the `unfreeze()` context manager to make any modification:
 
 ```python
 with cfg.unfreeze():
@@ -101,14 +101,14 @@ cfg.print()
 ```
 
 ```shell
-mode:               train
+mode:                         train
 model:
-  backbone:         vgg19
+  backbone:                     vgg19
 data:
-  source:           dir/to/data/*.jpg
-  batch_size:       512
+  source:                       dir/to/data/*.jpg
+  batch_size:                   512
 training:
-  optimizer:        Adam
+  optimizer:                    Adam
 ```
 
 Here, by typing `cfg.training = Config({'optimizer': 'Adam'})`, we instantiate a temporary 
@@ -140,12 +140,12 @@ cfg.print()
 ```
 
 ```shell
-mode:               train
+mode:                         train
 model:
-  backbone:         resnet50
+  backbone:                     resnet50
 data:
-  source:           dir/to/data/*.jpg
-  batch_size:       128
+  source:                       dir/to/data/*.jpg
+  batch_size:                   128
 ```
 
 If the user-specific configurations contain attributes that are not in `cfg`, use 
@@ -184,17 +184,17 @@ cfg.print()
 ```
 
 ```shell
-mode:               train
+mode:                         train
 optimizer:
-  optimizer_name:   Adam
-  lr:               1e-05
-  momentum:         0.9
+  optimizer_name:               Adam
+  lr:                           1e-05
+  momentum:                     0.9
 ```
 
 Note that by default, the non-conflict attributes will be kept unchanged after merging, so in this case, `cfg.optimizer.momentum` attribute is still kept after merging, which is not our intention because Adam does not  require a `momentum` parameter.
 
 In such scenarios that we would like to completely replace an attribute (`cfg.optmizer` 
-here) and all its children attributes, use `keep_existed_attr=False` to keep your `cfg` neater:
+here) and all its children attributes, use `keep_existed_attr=False` to make `cfg` neater:
 
 ```python
 cfg = Config('sgd.yaml')
@@ -204,10 +204,10 @@ cfg.print()
 ```
 
 ```shell
-mode:               train
+mode:                         train
 optimizer:
-  optimizer_name:   Adam
-  lr:               1e-05
+  optimizer_name:               Adam
+  lr:                           1e-05
 ```
 
 Now `cfg.optimizer.momentum` is gone because we explicitly ask not to keep those old and 
@@ -274,30 +274,30 @@ if __name__ == '__main__':
 Finally we run `main.py` in the terminal with some extra arguments:
 
 ```shell
-$ python main.py --model.backbone resnet50 --data.batch_size 1024
+$ python main.py --model.backbone resnet101 --data.batch_size 1024
 ```
 
 and will get results:
 
 ```shell
-mode:               train
+mode:                         train
 model:
-  backbone:         resnet50
+  backbone:                     resnet101
 data:
-  source:           dir/to/data/*.jpg
-  batch_size:       1024
+  source:                       dir/to/data/*.jpg
+  batch_size:                   1024
 ```
 
 
 ## Dump & Conversion
 
-`Config` provides following method to dump or convert your configurations to other datatype: 
+`Config` provides following methods to dump or convert your configurations to other datatype: 
 
-* `dump(yaml_path)` dumps the configurations into a yaml file. 
+* `dump(yaml_path)` dumps the configurations into a yaml file;
 
-* `copy()` creates a deep copy the current `Config` object. 
+* `copy()` creates a deep copy of the current `Config` object; 
   
-* `to_dict()` converts a `Config` object to a regular nested dict.
+* `to_dict()` converts a `Config` object into a regular nested dict.
 
 ## More Usage Examples
 

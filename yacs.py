@@ -106,10 +106,17 @@ class Config(OrderedDict):
     def _set_immutable(self, is_immutable):
         """ Recursively set immutability. """
 
-        self.__dict__['__immutable__'] = is_immutable
-        for v in self.values():
-            if isinstance(v, Config):
-                v._set_immutable(is_immutable)
+        def _recursively_set_immutable(obj):
+            if isinstance(obj, dict):
+                if isinstance(obj, Config):
+                    obj.__dict__['__immutable__'] = is_immutable
+                for v in obj.values():
+                    _recursively_set_immutable(v)
+            elif isinstance(obj, (list, tuple)):
+                for item in obj:
+                    _recursively_set_immutable(item)
+
+        _recursively_set_immutable(self)
 
     # ---------------- Set & Get ----------------
 
@@ -252,7 +259,7 @@ class Config(OrderedDict):
         def _merge(source_cfg, other_cfg, add_new, keep_existed):
             """ Recursively merge the new Config object into the source one """
 
-            with source_cfg.unfreeze():
+            with source_cfg.unfreeze(), other_cfg.unfreeze():
                 for k, v in other_cfg.items():
                     if k not in source_cfg and not add_new:
                         raise AttributeError(
@@ -286,16 +293,20 @@ class Config(OrderedDict):
         An inverse method to self.from_dict()
         """
 
-        def _to_dict(config):
-            if alphabetical:
-                config = sorted(config.items(), key=lambda x: x[0])
-            dic = dict(config)
-            for k, v in dic.items():
-                if isinstance(v, Config):
-                    dic[k] = _to_dict(v)
-            return dic
+        def _recursively_to_dict(obj):
+            if isinstance(obj, Config):
+                if alphabetical:
+                    obj = sorted(obj.items(), key=lambda x: x[0])
+                dic = dict(obj)
+                for k, v in dic.items():
+                    dic[k] = _recursively_to_dict(v)
+                return dic
+            elif isinstance(obj, (list, tuple)):
+                return tuple(_recursively_to_dict(item) for item in obj)
+            else:
+                return obj
 
-        return _to_dict(self)
+        return _recursively_to_dict(self)
 
     def to_parser(self):
         """
@@ -346,7 +357,7 @@ class Config(OrderedDict):
     def __str__(self):
         return self.to_dict().__repr__()
 
-    def to_str(self, alphabetical=False):
+    def string(self, alphabetical=False):
         title_width = 30
 
         def _to_string(dic, indent=0):
@@ -364,7 +375,7 @@ class Config(OrderedDict):
         return '\n'.join(_to_string(self))
 
     def print(self, streamer=print, alphabetical=False):
-        return streamer(self.to_str(alphabetical))
+        return streamer(self.string(alphabetical))
 
     def remove(self, key):
         """ Remove an attribute by its key. """
@@ -386,7 +397,7 @@ class Config(OrderedDict):
         for k, v in dic.items():
             if isinstance(v, dict):
                 dic[k] = cls(v)
-            elif isinstance(v, list):  # load list as tuple for safety
+            elif isinstance(v, (list, tuple)):  # load list as tuple for safety
                 dic[k] = tuple(cls(x) if isinstance(x, dict) else x for x in v)
 
         return dic

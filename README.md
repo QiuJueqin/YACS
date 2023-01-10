@@ -149,10 +149,10 @@ data:
 ```
 
 If the user-specific configurations contain attributes that are not in `cfg`, use 
-`allow_new_attr=True` to explicitly claim that you wish to add new attributes:
+`exclusive=False` to explicitly claim that you wish to add new attributes:
 
 ```python
-cfg.merge('user_config.yaml', allow_new_attr=True)
+cfg.merge('user_config.yaml', exclusive=False)
 ```
 
 Let's see another example. Assume there is a `optimizer` attribute in the default yaml, in which 
@@ -297,7 +297,10 @@ data:
 
 * `copy()` creates a deep copy of the current `Config` object; 
   
-* `to_dict()` converts a `Config` object into a regular nested dict.
+* `to_dict()` converts a `Config` object into a regular nested dict;
+
+* `string()` converts a `Config` object into a string with pretty format.
+
 
 ## More Usage Examples
 

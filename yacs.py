@@ -4,10 +4,11 @@
 # Author: Qiu Jueqin (qiujueqin@gmail.com)
 
 
+import os
 import os.path as op
-import copy
 import argparse
 import pathlib
+from copy import deepcopy
 from collections import OrderedDict, defaultdict
 from contextlib import contextmanager
 
@@ -201,27 +202,33 @@ class Config(OrderedDict):
         super().__init__(Config._from_dict(nested_dict))
         self.freeze()
 
-    def merge(self, other, allow_new_attr=False, keep_existed_attr=True):
+    def merge(self, other,
+              exclusive=True,
+              max_exclusive_depth=float('Inf'),
+              keep_existed_attr=True):
         """
         Recursively merge from other object
 
         :param other: Config object | dict | yaml filepath |
             argparse.Namespace object
-        :param allow_new_attr: whether allow to add new attributes
+        :param exclusive: if set to True, merging with new fields is forbidden
 
         Example:
 
         >>> cfg = Config({'optimizer': 'adam'})
-        >>> cfg.merge({'lr': 0.001}, allow_new_attr=True)
+        >>> cfg.merge({'lr': 0.001}, exclusive=False)
         >>> cfg.print()
 
         optimizer: adam
         lr: 0.001
 
-        >>> cfg.merge({'weight_decay': 1E-7}, allow_new_attr=False)
+        >>> cfg.merge({'weight_decay': 1E-7}, exclusive=True)
 
         AttributeError: attempted to add a new attribute: weight_decay
 
+        :param max_exclusive_depth: max depth to prevent from merging new
+            attributes, only valid when exclusive=True. Set to 0 is equal to
+            exclusive=False
         :param keep_existed_attr: whether keep those attributes that are not
             in 'other'. You may wish to trigger this if requires to completely
             replace a child Config object. See example/examples.py: Example 5
@@ -232,7 +239,7 @@ class Config(OrderedDict):
         >>> cfg1 = Config({'foo': {'Alice': 0, 'Bob': 1}})
         >>> cfg2 = cfg1.copy()
         >>> another = {'foo': {'Carol': 42}}
-        >>> cfg1.merge(another, allow_new_attr=True)
+        >>> cfg1.merge(another, exclusive=False)
         >>> cfg1.print()
 
         foo:
@@ -240,7 +247,7 @@ class Config(OrderedDict):
             Bob: 1
             Carol: 42
 
-        >>> cfg2.merge(another, allow_new_attr=True, keep_existed_attr=False)
+        >>> cfg2.merge(another, exclusive=False, keep_existed_attr=False)
         >>> cfg2.print()
 
         foo:
@@ -256,25 +263,29 @@ class Config(OrderedDict):
                 f'attempted to merge from an unsupported {type(other)} object'
             )
 
-        def _merge(source_cfg, other_cfg, add_new, keep_existed):
+        depth = 0
+
+        def _merge(source_cfg, other_cfg, excl, keep_existed):
             """ Recursively merge the new Config object into the source one """
+            nonlocal depth
+            depth += 1
 
             with source_cfg.unfreeze(), other_cfg.unfreeze():
                 for k, v in other_cfg.items():
-                    if k not in source_cfg and not add_new:
+                    if k not in source_cfg and excl and depth <= max_exclusive_depth:
                         raise AttributeError(
-                            f'attempted to add an attribute {k} but it is not '
-                            f'found in the source Config. Set `allow_new_attr` '
-                            f'to True if requires to add new attributes'
+                            f'attempted to merge an attribute `{k}` that is not '
+                            f'found in the source Config. Set `exclusive` to False '
+                            f'if requires to add new attributes'
                         )
 
                     if isinstance(v, Config):
-                        if isinstance(source_cfg.get(k, None), Config):
-                            _merge(source_cfg[k], v, add_new, keep_existed)
+                        if isinstance(source_cfg.get(k), Config):
+                            _merge(source_cfg[k], v, excl, keep_existed)
                         else:
                             source_cfg[k] = v
                     else:
-                        source_cfg[k] = copy.deepcopy(v)
+                        source_cfg[k] = deepcopy(v)
 
                 if not keep_existed:
                     source_keys = list(source_cfg.keys())
@@ -283,7 +294,7 @@ class Config(OrderedDict):
                                 not isinstance(source_cfg[k], Config):
                             source_cfg.remove(k)
 
-        _merge(self, other, allow_new_attr, keep_existed_attr)
+        _merge(self, other, exclusive, keep_existed_attr)
 
     # ---------------- Output ----------------
 
@@ -340,16 +351,41 @@ class Config(OrderedDict):
 
         return parser
 
-    def dump(self, save_path):
+    def dump(self, save_path, ignored_keys=()):
         """ Dump a Config object into a yaml file """
+        if not save_path.endswith('.yaml'):
+            raise TypeError('only yaml file is supported by dump() method')
+
+        def _serialize(obj):
+            serializable_types = (bool, str, int, float, list, tuple, dict, set, type(None))
+            if not isinstance(obj, serializable_types):
+                return '{} <class \'{}\'>'.format(str(obj), obj.__class__.__name__)
+            elif isinstance(obj, dict):
+                return {k: _serialize(v) for k, v in obj.items()}
+            elif isinstance(obj, (list, tuple)):
+                return [_serialize(item) for item in obj]
+            else:
+                return obj
+
+        serializable_dic = _serialize({
+            k: v for k, v in self.to_dict(alphabetical=True).items() if k not in ignored_keys
+        })
+
+        os.makedirs(op.dirname(save_path), exist_ok=True)
         with open(save_path, 'w') as fp:
-            yaml.dump(self.to_dict(alphabetical=True), fp)
+            yaml.dump(serializable_dic, fp)
 
     def copy(self):
         """ Create a deep copy of the Config object """
-        return Config(copy.deepcopy(self.to_dict()))
+        return Config(deepcopy(self.to_dict()))
 
     # ---------------- Misc ----------------
+
+    def __copy__(self):
+        return self.copy()
+
+    def __deepcopy__(self, memo):
+        return self.copy()
 
     def __repr__(self):
         return self.to_dict().__repr__()
@@ -357,25 +393,26 @@ class Config(OrderedDict):
     def __str__(self):
         return self.to_dict().__repr__()
 
-    def string(self, alphabetical=False):
-        title_width = 30
+    def string(self, alphabetical=False, ignored_keys=(), key_width=30, indent=0):
+        ignored_keys = set(ignored_keys)
 
-        def _to_string(dic, indent=0):
+        def _to_string(dic, idt=indent):
             texts = []
             keys = sorted(dic.keys()) if alphabetical else dic.keys()
+            keys = [k for k in keys if k not in ignored_keys]
             for k in keys:
-                title = ' ' * indent + str(k) + ':'
-                texts += ['{:<{}}'.format(title, title_width + indent)]
+                title = ' ' * idt + str(k) + ':'
+                texts += ['{:<{}}'.format(title, key_width + idt)]
                 if not isinstance(dic[k], Config):
                     texts[-1] += str(dic[k])
                 else:
-                    texts += _to_string(dic[k], indent=indent + 2)
+                    texts += _to_string(dic[k], idt=idt + 2)
             return texts
 
         return '\n'.join(_to_string(self))
 
-    def print(self, streamer=print, alphabetical=False):
-        return streamer(self.string(alphabetical))
+    def print(self, streamer=print, alphabetical=False, ignored_keys=None, key_width=40, indent=0):
+        return streamer(self.string(alphabetical, ignored_keys, key_width, indent))
 
     def remove(self, key):
         """ Remove an attribute by its key. """
@@ -389,11 +426,11 @@ class Config(OrderedDict):
 
         del self[key]
 
-    # ---------------- Private ----------------
+    # ---------------- Helpers ----------------
 
     @classmethod
     def _from_dict(cls, dic):
-        dic = copy.deepcopy(OrderedDict(dic))
+        dic = deepcopy(OrderedDict(dic))
         for k, v in dic.items():
             if isinstance(v, dict):
                 dic[k] = cls(v)
@@ -434,7 +471,6 @@ class Config(OrderedDict):
         :param separator_dict: a non-nested dict
         :return: a nested dict
         """
-        separator_dict = copy.deepcopy(separator_dict)
 
         def _init_nested_dict():
             return defaultdict(_init_nested_dict)
@@ -447,7 +483,7 @@ class Config(OrderedDict):
 
         nested_dict = _init_nested_dict()
 
-        for k, v in separator_dict.items():
+        for k, v in deepcopy(separator_dict).items():
             tmp_d = nested_dict
             keys = k.split(separator)
             for sub_key in keys[:-1]:
@@ -488,7 +524,6 @@ class Config(OrderedDict):
         :param nested_dict: a regular (optionally nested) dict
         :return: a non-nested dict whose keys contain separators
         """
-        nested_dict = copy.deepcopy(nested_dict)
 
         def _create_separator_dict(x, key='', separator_dict={}):
             if isinstance(x, dict):
@@ -499,4 +534,30 @@ class Config(OrderedDict):
                 separator_dict[key] = x
             return separator_dict
 
-        return _create_separator_dict(nested_dict)
+        return _create_separator_dict(deepcopy(nested_dict))
+
+    @staticmethod
+    def _unknown_args_to_dict(unknown_args):
+        """
+        Convert unknown argument list returned by `parser.parse_known_args()` into a dict
+        :param unknown_args: list of arguments, in which the keys must starts with '--' and
+            the values could be any Python literal expression
+        :return: a non-nested dict
+        """
+        dic = {}
+
+        key, value_lst = None, []
+        for item in unknown_args + ['--']:
+            if item.startswith('--'):
+                if key and value_lst:
+                    literal = ' '.join(value_lst)
+                    try:
+                        dic[key] = eval(literal)
+                    except SyntaxError as e:
+                        raise SyntaxError('invalid argument: --{} {}'.format(key, literal))
+
+                key, value_lst = item.replace('--', ''), []
+            else:
+                value_lst.append(item)
+
+        return dic

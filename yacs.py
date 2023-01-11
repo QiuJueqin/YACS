@@ -56,7 +56,7 @@ See README.md and ./examples directory for more usage hints.
 
 class Config(OrderedDict):
 
-    def __init__(self, init=None):
+    def __init__(self, init=None, **kwargs):
         """
         :param init: dict | yaml filepath | argparse.Namespace
         """
@@ -70,7 +70,7 @@ class Config(OrderedDict):
         elif isinstance(init, str):
             self.from_yaml(init)
         elif isinstance(init, argparse.Namespace):
-            self.from_namespace(init)
+            self.from_namespace(init, **kwargs)
         else:
             raise TypeError(
                 f'Config could only be instantiated from a dict, a yaml '
@@ -171,7 +171,7 @@ class Config(OrderedDict):
         super().__init__(Config._from_dict(dic))
         self.freeze()
 
-    def from_namespace(self, namespace):
+    def from_namespace(self, parsed_args, unknown_args=None):
         """
         Instantiation from an argparse.Namespace object.
 
@@ -189,16 +189,47 @@ class Config(OrderedDict):
 
         Given the returned argparse.Namespace object 'args', from_namespace()
         will create a Config object as if it was instantiated from a nested
-        dict d = {'foo': {'bar': 42}}
+        dict d = {'foo': {'bar': 42}}.
+
+        Optionally, the extra argument `unknown_args` also accepts unknown
+        arguments by parser.parse_known_args(), but note that the arguments
+        in command line must starts with '--'.
+
+        For example, creating an argparse.ArgumentParser with '--foo'
+        argument:
+
+        >>> parser = argparse.ArgumentParser()
+        >>> parser.add_argument('--foo', type=int, default=0)
+
+        but in command line user also inputs other arguments:
+
+        ```
+        python main.py --foo 42 --bar ['Alice', 'Bob']
+        ```
+
+        Given the returned argparse.Namespace object `parsed` and unknown
+        args list `unknown` by calling
+
+         >>> parsed, unknown = parser.parse_known_args()
+
+        `from_namespace(parsed, unknown_args=unknown)` will create a Config
+        object as if it was instantiated from a dict
+        d = {'foo': 42, 'bar': ['Alice', 'Bob']}.
         """
 
-        if not isinstance(namespace, argparse.Namespace):
+        if not isinstance(parsed_args, argparse.Namespace):
             raise TypeError(
                 f'expected an argparse.Namespace object, but given a '
-                f'{type(namespace)} '
+                f'{type(parsed_args)} '
             )
 
-        nested_dict = self._separator_dict_to_nested_dict(vars(namespace))
+        nested_dict = self._separator_dict_to_nested_dict(vars(parsed_args))
+
+        if unknown_args:
+            nested_dict.update(
+                self._separator_dict_to_nested_dict(self._unknown_args_to_dict(unknown_args))
+            )
+
         super().__init__(Config._from_dict(nested_dict))
         self.freeze()
 

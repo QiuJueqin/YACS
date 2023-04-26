@@ -294,16 +294,11 @@ class Config(OrderedDict):
                 f'attempted to merge from an unsupported {type(other)} object'
             )
 
-        depth = 0
-
-        def _merge(source_cfg, other_cfg, excl, keep_existed):
+        def _merge(source_cfg, other_cfg, excl, keep_existed, _cur_depth=1):
             """ Recursively merge the new Config object into the source one """
-            nonlocal depth
-            depth += 1
-
             with source_cfg.unfreeze(), other_cfg.unfreeze():
                 for k, v in other_cfg.items():
-                    if k not in source_cfg and excl and depth <= max_exclusive_depth:
+                    if k not in source_cfg and excl and _cur_depth <= max_exclusive_depth:
                         raise AttributeError(
                             f'attempted to merge an attribute `{k}` that is not '
                             f'found in the source Config. Set `exclusive` to False '
@@ -312,7 +307,7 @@ class Config(OrderedDict):
 
                     if isinstance(v, Config):
                         if isinstance(source_cfg.get(k), Config):
-                            _merge(source_cfg[k], v, excl, keep_existed)
+                            _merge(source_cfg[k], v, excl, keep_existed, _cur_depth=_cur_depth + 1)
                         else:
                             source_cfg[k] = v
                     else:

@@ -123,12 +123,12 @@ class Config(OrderedDict):
 
     def __setattr__(self, key, value):
         if self.is_frozen:
-            raise AttributeError('attempted to modify an immutable Config')
+            raise RuntimeError('attempted to modify an immutable Config')
         self[key] = value
 
     def __setitem__(self, key, value):
         if self.is_frozen:
-            raise AttributeError('attempted to modify an immutable Config')
+            raise RuntimeError('attempted to modify an immutable Config')
         super().__setitem__(key, value)
 
     def __getattr__(self, key):
@@ -255,7 +255,8 @@ class Config(OrderedDict):
 
         >>> cfg.merge({'weight_decay': 1E-7}, exclusive=True)
 
-        AttributeError: attempted to add a new attribute: weight_decay
+        RuntimeError: attempted to add a new attribute `weight_decay` that is
+        not found in the source Config
 
         :param max_exclusive_depth: max depth to prevent from merging new
             attributes, only valid when exclusive=True. Set to 0 is equal to
@@ -299,7 +300,7 @@ class Config(OrderedDict):
             with source_cfg.unfreeze(), other_cfg.unfreeze():
                 for k, v in other_cfg.items():
                     if k not in source_cfg and excl and _cur_depth <= max_exclusive_depth:
-                        raise AttributeError(
+                        raise RuntimeError(
                             f'attempted to merge an attribute `{k}` that is not '
                             f'found in the source Config. Set `exclusive` to False '
                             f'if requires to add new attributes'
@@ -444,7 +445,7 @@ class Config(OrderedDict):
         """ Remove an attribute by its key. """
 
         if self.is_frozen:
-            raise AttributeError('attempted to modify an immutable Config')
+            raise RuntimeError('attempted to modify an immutable Config')
         if key not in self:
             raise AttributeError(
                 f'attempted to delete a non-existing attribute: {key}'
@@ -579,8 +580,8 @@ class Config(OrderedDict):
                     literal = ' '.join(value_lst)
                     try:
                         dic[key] = eval(literal)
-                    except SyntaxError as e:
-                        raise SyntaxError('invalid argument: --{} {}'.format(key, literal))
+                    except (SyntaxError, NameError) as e:
+                        dic[key] = literal  # parse as string
 
                 key, value_lst = item.replace('--', ''), []
             else:
